@@ -1,0 +1,856 @@
+[
+  {
+    "id": "job-photos-job-elrod-1772948019567.jpg",
+    "title": "1772948019567",
+    "type": "photo",
+    "status": "LR",
+    "job": "Elrod",
+    "date": "",
+    "tags": [
+      "elrod"
+    ],
+    "size": "0.0 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-elrod/1772948019567.jpg"
+  },
+  {
+    "id": "job-photos-job-elrod-1772948081831.jpg",
+    "title": "1772948081831",
+    "type": "photo",
+    "status": "LR",
+    "job": "Elrod",
+    "date": "",
+    "tags": [
+      "elrod"
+    ],
+    "size": "0.0 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-elrod/1772948081831.jpg"
+  },
+  {
+    "id": "job-photos-job-obrian-tresa-2026-obrian-porch-exterior.jpg",
+    "title": "Obrian Porch Exterior",
+    "type": "photo",
+    "status": "LR",
+    "job": "Obrian Tresa 2026",
+    "date": "",
+    "tags": [
+      "obrian",
+      "tresa"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-obrian-tresa-2026/obrian-porch-exterior.jpg"
+  },
+  {
+    "id": "job-photos-job-richard-knights-1773156362615.jpg",
+    "title": "1773156362615",
+    "type": "photo",
+    "status": "LR",
+    "job": "Richard Knights",
+    "date": "",
+    "tags": [
+      "richard",
+      "knights"
+    ],
+    "size": "2.7 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-richard-knights/1773156362615.jpg"
+  },
+  {
+    "id": "job-photos-job-richard-knights-1773245963721.jpg",
+    "title": "1773245963721",
+    "type": "photo",
+    "status": "LR",
+    "job": "Richard Knights",
+    "date": "",
+    "tags": [
+      "richard",
+      "knights"
+    ],
+    "size": "2.8 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-richard-knights/1773245963721.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-01.jpg",
+    "title": "Day1 Before 01",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-01.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-02.jpg",
+    "title": "Day1 Before 02",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-02.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-03.jpg",
+    "title": "Day1 Before 03",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-03.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-04.jpg",
+    "title": "Day1 Before 04",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-04.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-05.jpg",
+    "title": "Day1 Before 05",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-05.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-06.jpg",
+    "title": "Day1 Before 06",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-06.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-before-07.jpg",
+    "title": "Day1 Before 07",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-before-07.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-end-08.jpg",
+    "title": "Day1 End 08",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-end-08.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-end-09.jpg",
+    "title": "Day1 End 09",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-end-09.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-end-10.jpg",
+    "title": "Day1 End 10",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-end-10.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-progress-01.jpg",
+    "title": "Day1 Progress 01",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-progress-01.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-progress-02.jpg",
+    "title": "Day1 Progress 02",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-progress-02.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-progress-03.jpg",
+    "title": "Day1 Progress 03",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-progress-03.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day1-progress-04.jpg",
+    "title": "Day1 Progress 04",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day1-progress-04.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-demo-01.jpg",
+    "title": "Day2 Demo 01",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-demo-01.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-demo-02.jpg",
+    "title": "Day2 Demo 02",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-demo-02.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-demo-03.jpg",
+    "title": "Day2 Demo 03",
+    "type": "photo",
+    "status": "RAW",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-demo-03.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-01.jpg",
+    "title": "Day2 Frame 01",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-01.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-02.jpg",
+    "title": "Day2 Frame 02",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-02.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-03.jpg",
+    "title": "Day2 Frame 03",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-03.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-04.jpg",
+    "title": "Day2 Frame 04",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-04.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-05.jpg",
+    "title": "Day2 Frame 05",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-05.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-06.jpg",
+    "title": "Day2 Frame 06",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-06.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-07.jpg",
+    "title": "Day2 Frame 07",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-07.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-08.jpg",
+    "title": "Day2 Frame 08",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-08.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-09.jpg",
+    "title": "Day2 Frame 09",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-09.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-10.jpg",
+    "title": "Day2 Frame 10",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-10.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-11.jpg",
+    "title": "Day2 Frame 11",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-11.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-12.jpg",
+    "title": "Day2 Frame 12",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-12.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-frame-13.jpg",
+    "title": "Day2 Frame 13",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-frame-13.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-01.jpg",
+    "title": "Day2 Progress 01",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-01.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-02.jpg",
+    "title": "Day2 Progress 02",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-02.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-03.jpg",
+    "title": "Day2 Progress 03",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-03.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-04.jpg",
+    "title": "Day2 Progress 04",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-04.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-05.jpg",
+    "title": "Day2 Progress 05",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-05.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-06.jpg",
+    "title": "Day2 Progress 06",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-06.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day2-progress-07.jpg",
+    "title": "Day2 Progress 07",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day2-progress-07.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-plumb-01.jpg",
+    "title": "Day3 Plumb 01",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-plumb-01.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-plumb-02.jpg",
+    "title": "Day3 Plumb 02",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-plumb-02.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-plumb-03.jpg",
+    "title": "Day3 Plumb 03",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-plumb-03.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-plumb-04.jpg",
+    "title": "Day3 Plumb 04",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-plumb-04.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-plumb-05.jpg",
+    "title": "Day3 Plumb 05",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-plumb-05.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-plumb-06.jpg",
+    "title": "Day3 Plumb 06",
+    "type": "photo",
+    "status": "LR",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-plumb-06.jpg"
+  },
+  {
+    "id": "job-photos-job-sanders-day3-video-01.mp4",
+    "title": "Day3 Video 01",
+    "type": "video",
+    "status": "READY",
+    "job": "Sanders",
+    "date": "",
+    "tags": [
+      "sanders"
+    ],
+    "size": "1.0 MB",
+    "duration": "00:30",
+    "thumb": "http://192.168.7.185:3000/job-photos/job-sanders/day3-video-01.mp4"
+  },
+  {
+    "id": "job-photos-job-mock-craig-kitchen-client-notes.jpg",
+    "title": "Client Notes",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mock Craig Kitchen",
+    "date": "",
+    "tags": [
+      "mock",
+      "craig"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mock-craig-kitchen/client-notes.jpg"
+  },
+  {
+    "id": "job-photos-job-mock-craig-kitchen-kitchen-view-1.jpg",
+    "title": "Kitchen View 1",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mock Craig Kitchen",
+    "date": "",
+    "tags": [
+      "mock",
+      "craig"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mock-craig-kitchen/kitchen-view-1.jpg"
+  },
+  {
+    "id": "job-photos-job-mock-craig-kitchen-kitchen-view-2.jpg",
+    "title": "Kitchen View 2",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mock Craig Kitchen",
+    "date": "",
+    "tags": [
+      "mock",
+      "craig"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mock-craig-kitchen/kitchen-view-2.jpg"
+  },
+  {
+    "id": "job-photos-job-mark-swank-door-style.jpg",
+    "title": "Door Style",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mark Swank",
+    "date": "",
+    "tags": [
+      "mark",
+      "swank"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mark-swank/door-style.jpg"
+  },
+  {
+    "id": "job-photos-job-mark-swank-fireplace-beams.jpg",
+    "title": "Fireplace Beams",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mark Swank",
+    "date": "",
+    "tags": [
+      "mark",
+      "swank"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mark-swank/fireplace-beams.jpg"
+  },
+  {
+    "id": "job-photos-job-mark-swank-kitchen-dining.jpg",
+    "title": "Kitchen Dining",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mark Swank",
+    "date": "",
+    "tags": [
+      "mark",
+      "swank"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mark-swank/kitchen-dining.jpg"
+  },
+  {
+    "id": "job-photos-job-mark-swank-kitchen.jpg",
+    "title": "Kitchen",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mark Swank",
+    "date": "",
+    "tags": [
+      "mark",
+      "swank"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mark-swank/kitchen.jpg"
+  },
+  {
+    "id": "job-photos-job-mark-swank-living-beams.jpg",
+    "title": "Living Beams",
+    "type": "photo",
+    "status": "LR",
+    "job": "Mark Swank",
+    "date": "",
+    "tags": [
+      "mark",
+      "swank"
+    ],
+    "size": "0.1 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-mark-swank/living-beams.jpg"
+  },
+  {
+    "id": "job-photos-job-trisha-wood-1774720745176.jpg",
+    "title": "1774720745176",
+    "type": "photo",
+    "status": "LR",
+    "job": "Trisha Wood",
+    "date": "",
+    "tags": [
+      "trisha",
+      "wood"
+    ],
+    "size": "3.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-trisha-wood/1774720745176.jpg"
+  },
+  {
+    "id": "job-photos-job-trisha-wood-1774720760727.jpg",
+    "title": "1774720760727",
+    "type": "photo",
+    "status": "LR",
+    "job": "Trisha Wood",
+    "date": "",
+    "tags": [
+      "trisha",
+      "wood"
+    ],
+    "size": "2.8 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-trisha-wood/1774720760727.jpg"
+  },
+  {
+    "id": "job-photos-job-trisha-wood-bathroom-01.jpg",
+    "title": "Bathroom 01",
+    "type": "photo",
+    "status": "LR",
+    "job": "Trisha Wood",
+    "date": "",
+    "tags": [
+      "trisha",
+      "wood"
+    ],
+    "size": "0.2 MB",
+    "duration": null,
+    "thumb": "http://192.168.7.185:3000/job-photos/job-trisha-wood/bathroom-01.jpg"
+  }
+]
