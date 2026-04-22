@@ -7,6 +7,7 @@ type MediaStatus = "RAW" | "LR" | "READY" | "USED";
 type LibraryFilter = "all" | MediaType;
 type HomeView = "hq" | "library";
 type SmartView = "all" | "work" | "personal" | "travel" | "social" | "edited" | "inbox";
+type QuickTag = "work" | "personal" | "travel" | "social" | "skip";
 
 type MediaItem = {
   id: string;
@@ -24,21 +25,30 @@ type MediaItem = {
   source: string;
   sourceLabel: string;
   importedFromLightroom?: boolean;
+  needsTagging?: boolean;
 };
 
 type Payload = {
   items: MediaItem[];
+  jobs: string[];
+  inboxPath: string;
   summary: {
     total: number;
     photos: number;
     videos: number;
     music: number;
-    lightroomReady: number;
+    inboxCount: number;
   };
   sync?: {
     imported: number;
-    lightroomDir: string;
+    inboxDir: string;
   };
+};
+
+type PendingUpload = {
+  file: File;
+  tag: QuickTag | "";
+  job: string;
 };
 
 const libraryFilters: { key: LibraryFilter; label: string; icon: string }[] = [
@@ -46,6 +56,14 @@ const libraryFilters: { key: LibraryFilter; label: string; icon: string }[] = [
   { key: "photo", label: "Photos", icon: "🖼️" },
   { key: "video", label: "Videos", icon: "🎬" },
   { key: "music", label: "Audio", icon: "🎵" },
+];
+
+const quickTags: { key: QuickTag; label: string }[] = [
+  { key: "work", label: "Work" },
+  { key: "personal", label: "Personal" },
+  { key: "travel", label: "Travel" },
+  { key: "social", label: "Social" },
+  { key: "skip", label: "Skip" },
 ];
 
 function statusStyle(status: MediaStatus) {
@@ -76,12 +94,12 @@ function buttonStyle(active: boolean) {
 
 function isSmartViewMatch(item: MediaItem, smartView: SmartView) {
   if (smartView === "all") return true;
-  if (smartView === "work") return item.job !== "Personal Media";
+  if (smartView === "work") return item.tags.includes("work") || item.job === "Work Media";
   if (smartView === "personal") return item.tags.includes("personal") || item.job === "Personal Media";
   if (smartView === "travel") return item.tags.includes("travel");
-  if (smartView === "social") return ["instagram", "facebook", "social"].some((tag) => item.tags.includes(tag));
+  if (smartView === "social") return item.tags.includes("social");
   if (smartView === "edited") return item.status === "READY" || item.status === "USED";
-  return item.status === "RAW" && item.tags.length <= 1;
+  return item.needsTagging || (item.status === "RAW" && item.tags.length <= 1);
 }
 
 export default function Page() {
@@ -91,25 +109,39 @@ export default function Page() {
   const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>("all");
   const [smartView, setSmartView] = useState<SmartView>("all");
   const [items, setItems] = useState<MediaItem[]>([]);
+  const [jobOptions, setJobOptions] = useState<string[]>([]);
+  const [inboxPath, setInboxPath] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [lightroomReady, setLightroomReady] = useState(0);
   const [selectedTags, setSelectedTags] = useState("");
   const [selectedJob, setSelectedJob] = useState("");
   const [selectedNotes, setSelectedNotes] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<MediaStatus>("RAW");
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
+  const [promptItem, setPromptItem] = useState<MediaItem | null>(null);
+  const [promptTag, setPromptTag] = useState<QuickTag | "">("");
+  const [promptJob, setPromptJob] = useState("");
 
-  async function loadLibrary(syncLightroom = false) {
+  async function loadLibrary(syncInbox = false) {
     setLoading(true);
-    const endpoint = syncLightroom ? "/api/lightroom-sync" : "/api/media";
-    const response = await fetch(endpoint, { method: syncLightroom ? "POST" : "GET" });
+    const endpoint = syncInbox ? "/api/lightroom-sync" : "/api/media";
+    const response = await fetch(endpoint, { method: syncInbox ? "POST" : "GET" });
     const payload = (await response.json()) as Payload;
     setItems(payload.items);
-    setLightroomReady(payload.summary.lightroomReady);
+    setJobOptions(payload.jobs || []);
+    setInboxPath(payload.inboxPath || "");
     setSelectedId((current) => current || payload.items[0]?.id || "");
+    const needsPrompt = payload.items.find((item) => item.needsTagging);
+    if (needsPrompt) {
+      setPromptItem(needsPrompt);
+      setPromptTag("");
+      setPromptJob("");
+      setTagModalOpen(true);
+    }
     setLoading(false);
   }
 
@@ -117,8 +149,7 @@ export default function Page() {
     loadLibrary();
   }, []);
 
-  const jobs = useMemo(() => ["All Jobs", ...Array.from(new Set(items.map((item) => item.job))).sort()], [items]);
-
+  const jobs = useMemo(() => ["All Jobs", ...Array.from(new Set([...jobOptions, ...items.map((item) => item.job)])).filter(Boolean).sort()], [items, jobOptions]);
   const heroImage = items.find((item) => item.type === "photo")?.thumb;
 
   const filtered = useMemo(() => items.filter((item) => {
@@ -148,19 +179,19 @@ export default function Page() {
   };
 
   const sourceCards = [
-    { id: "apple-photos", label: "Apple Photos", icon: "", count: items.filter((item) => item.tags.includes("personal")).length, note: "Staged personal pulls and imported images sitting in the same creative orbit.", image: heroImage },
-    { id: "job-media", label: "Job Media", icon: "🏗️", count: items.filter((item) => item.job !== "Personal Media").length, note: "Live jobsite photos and progress media pulled from mission-control without touching it.", image: items.find((item) => item.source === "job-media")?.thumb || heroImage },
-    { id: "lightroom", label: "Lightroom", icon: "🎞️", count: lightroomReady, note: "Watch folder imports waiting for polish, packaging, or posting.", image: items.find((item) => item.source === "lightroom")?.thumb || heroImage },
-    { id: "downloads", label: "Uploads", icon: "⬇️", count: items.filter((item) => item.source === "uploads").length, note: "Drag-and-drop intake for loose media Craig wants inside the system fast.", image: items.find((item) => item.source === "uploads")?.thumb || heroImage },
+    { id: "gallery-inbox", label: "Gallery Inbox", icon: "📥", count: items.filter((item) => item.source === "gallery-inbox").length, note: inboxPath ? `Hot folder at ${inboxPath} for drag-and-drop intake.` : "Dedicated intake folder for fast imports.", image: items.find((item) => item.source === "gallery-inbox")?.thumb || heroImage },
+    { id: "job-media", label: "Job Media", icon: "🏗️", count: items.filter((item) => item.source === "job-media").length, note: "Live jobsite photos bridged in from mission-control without touching the source app.", image: items.find((item) => item.source === "job-media")?.thumb || heroImage },
+    { id: "uploads", label: "Uploads", icon: "⬆️", count: items.filter((item) => item.source === "uploads").length, note: "Manual uploads after quick tagging.", image: items.find((item) => item.source === "uploads")?.thumb || heroImage },
+    { id: "hub-imports", label: "Hub Transfers", icon: "🔁", count: items.filter((item) => item.source === "hub-imports").length, note: "Photos sent straight from The Hub land here ready to use.", image: items.find((item) => item.source === "hub-imports")?.thumb || heroImage },
   ];
 
   const smartViews = [
     { id: "work", label: "Work Content", icon: "🔨", count: items.filter((item) => isSmartViewMatch(item, "work")).length, note: "Job photos, videos, and field media tied to actual work.", accent: "#4A8BC2" },
-    { id: "personal", label: "Personal", icon: "🧑‍🧑‍🧒", count: items.filter((item) => isSmartViewMatch(item, "personal")).length, note: "Personal images and anything tagged for life outside the jobs.", accent: "#f97316" },
+    { id: "personal", label: "Personal", icon: "🧑‍🧑‍🧒", count: items.filter((item) => isSmartViewMatch(item, "personal")).length, note: "Personal images and anything tagged outside the jobs.", accent: "#f97316" },
     { id: "travel", label: "Travel", icon: "✈️", count: items.filter((item) => isSmartViewMatch(item, "travel")).length, note: "Trips and destination folders when those show up in the library.", accent: "#14b8a6" },
-    { id: "social", label: "Social Studio", icon: "📱", count: items.filter((item) => isSmartViewMatch(item, "social")).length, note: "Instagram, Facebook, and social-ready content batches.", accent: "#ec4899" },
-    { id: "edited", label: "Edited & Ready", icon: "✨", count: items.filter((item) => isSmartViewMatch(item, "edited")).length, note: "READY and USED assets ready to ship or already doing work.", accent: "#a855f7" },
-    { id: "inbox", label: "Inbox / Needs Sorting", icon: "📥", count: items.filter((item) => isSmartViewMatch(item, "inbox")).length, note: "Fresh raw pulls that still need tags, notes, or direction.", accent: "#eab308" },
+    { id: "social", label: "Social Studio", icon: "📱", count: items.filter((item) => isSmartViewMatch(item, "social")).length, note: "Social-ready content batches and quick shares.", accent: "#ec4899" },
+    { id: "edited", label: "Edited & Ready", icon: "✨", count: items.filter((item) => isSmartViewMatch(item, "edited")).length, note: "READY and USED assets ready to ship.", accent: "#a855f7" },
+    { id: "inbox", label: "Inbox / Needs Sorting", icon: "📥", count: items.filter((item) => isSmartViewMatch(item, "inbox")).length, note: "Fresh files still waiting on tags or a job link.", accent: "#eab308" },
   ] as const;
 
   async function saveInspector() {
@@ -173,25 +204,53 @@ export default function Page() {
         status: selectedStatus,
         notes: selectedNotes,
         tags: selectedTags.split(",").map((tag) => tag.trim().toLowerCase()).filter(Boolean),
+        needsTagging: false,
       }),
     });
     const payload = await response.json();
     setItems((current) => current.map((item) => item.id === selected.id ? payload.item : item));
   }
 
-  async function uploadFiles(files: FileList | null) {
+  function queueFiles(files: FileList | null) {
     if (!files?.length) return;
+    setPendingUploads(Array.from(files).map((file) => ({ file, tag: "", job: "" })));
+    setPromptTag("");
+    setPromptJob("");
+    setPromptItem(null);
+    setTagModalOpen(true);
+  }
+
+  async function commitUploadQueue(chosenTag: QuickTag, chosenJob: string) {
+    if (!pendingUploads.length) return;
     setUploading(true);
-    for (const file of Array.from(files)) {
+    for (const upload of pendingUploads) {
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", upload.file);
+      form.append("tag", chosenTag);
+      if (chosenTag === "work" && chosenJob) form.append("job", chosenJob);
       await fetch("/api/media/upload", { method: "POST", body: form });
     }
+    setPendingUploads([]);
+    setTagModalOpen(false);
     await loadLibrary();
     setUploading(false);
   }
 
-  async function syncLightroom() {
+  async function applyPromptTag() {
+    if (!promptItem || !promptTag) return;
+    await fetch(`/api/media/${promptItem.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tag: promptTag, job: promptTag === "work" ? promptJob : undefined }),
+    });
+    setTagModalOpen(false);
+    setPromptItem(null);
+    setPromptTag("");
+    setPromptJob("");
+    await loadLibrary();
+  }
+
+  async function syncInbox() {
     setSyncing(true);
     await loadLibrary(true);
     setSyncing(false);
@@ -203,14 +262,14 @@ export default function Page() {
         <div style={{ border: "1px solid rgba(148,163,184,0.14)", borderRadius: 32, overflow: "hidden", background: "rgba(3,7,18,0.72)", backdropFilter: "blur(20px)", boxShadow: "0 30px 80px rgba(2,6,23,0.55)" }}>
           <div style={{ padding: 28, borderBottom: "1px solid rgba(148,163,184,0.12)", display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", background: "linear-gradient(180deg, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.62) 100%)" }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#7dd3fc", textTransform: "uppercase", letterSpacing: "0.16em" }}>2.0</div>
-              <h1 style={{ margin: "8px 0 0", fontSize: 44, lineHeight: 1, letterSpacing: "-0.03em" }}>Media HQ</h1>
-              <p style={{ margin: "10px 0 0", color: "#94a3b8", maxWidth: 720, fontSize: 15 }}>Real media, real folders, actual playback. No cardboard set dressing.</p>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#7dd3fc", textTransform: "uppercase", letterSpacing: "0.16em" }}>The Gallery</div>
+              <h1 style={{ margin: "8px 0 0", fontSize: 44, lineHeight: 1, letterSpacing: "-0.03em" }}>Craig&apos;s visual command center</h1>
+              <p style={{ margin: "10px 0 0", color: "#94a3b8", maxWidth: 720, fontSize: 15 }}>Real media, real folders, deduped imports, quick tagging, and a cleaner intake lane.</p>
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button onClick={() => setHomeView("hq")} style={{ padding: "12px 16px", borderRadius: 14, border: homeView === "hq" ? "1px solid rgba(125,211,252,0.45)" : "1px solid rgba(148,163,184,0.18)", background: homeView === "hq" ? "rgba(14,165,233,0.18)" : "rgba(15,23,42,0.75)", color: "#f8fafc", fontWeight: 700 }}>Media HQ</button>
+              <button onClick={() => setHomeView("hq")} style={{ padding: "12px 16px", borderRadius: 14, border: homeView === "hq" ? "1px solid rgba(125,211,252,0.45)" : "1px solid rgba(148,163,184,0.18)", background: homeView === "hq" ? "rgba(14,165,233,0.18)" : "rgba(15,23,42,0.75)", color: "#f8fafc", fontWeight: 700 }}>Gallery Home</button>
               <button onClick={() => setHomeView("library")} style={{ padding: "12px 16px", borderRadius: 14, border: homeView === "library" ? "1px solid rgba(125,211,252,0.45)" : "1px solid rgba(148,163,184,0.18)", background: homeView === "library" ? "rgba(59,130,246,0.18)" : "rgba(15,23,42,0.75)", color: "#f8fafc", fontWeight: 700 }}>Library</button>
-              <button onClick={syncLightroom} disabled={syncing} style={{ padding: "12px 16px", borderRadius: 14, border: "1px solid rgba(16,185,129,0.35)", background: "rgba(16,185,129,0.16)", color: "#d1fae5", fontWeight: 700 }}>{syncing ? "Syncing…" : `Lightroom Sync (${lightroomReady})`}</button>
+              <button onClick={syncInbox} disabled={syncing} style={{ padding: "12px 16px", borderRadius: 14, border: "1px solid rgba(16,185,129,0.35)", background: "rgba(16,185,129,0.16)", color: "#d1fae5", fontWeight: 700 }}>{syncing ? "Scanning…" : `Scan Inbox (${items.filter((item) => item.source === "gallery-inbox").length})`}</button>
             </div>
           </div>
 
@@ -222,16 +281,16 @@ export default function Page() {
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(2,6,23,0.86) 10%, rgba(15,23,42,0.44) 52%, rgba(2,6,23,0.88) 100%)" }} />
                   <div style={{ position: "relative", zIndex: 1, padding: 28, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 360 }}>
                     <div>
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, background: "rgba(14,165,233,0.14)", border: "1px solid rgba(125,211,252,0.22)", color: "#bae6fd", fontWeight: 700, fontSize: 13 }}>Creative Command Center</div>
-                      <div style={{ fontSize: 48, fontWeight: 900, lineHeight: 0.98, letterSpacing: "-0.04em", marginTop: 16, maxWidth: 760 }}>Craig&apos;s actual media stack, finally behaving like a media stack.</div>
-                      <p style={{ marginTop: 14, maxWidth: 640, color: "#cbd5e1", fontSize: 16, lineHeight: 1.7 }}>Filesystem scan, Lightroom watch folder, job-photo bridge, uploads, playback, and inspector edits all tied together.</p>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, background: "rgba(14,165,233,0.14)", border: "1px solid rgba(125,211,252,0.22)", color: "#bae6fd", fontWeight: 700, fontSize: 13 }}>The Gallery</div>
+                      <div style={{ fontSize: 48, fontWeight: 900, lineHeight: 0.98, letterSpacing: "-0.04em", marginTop: 16, maxWidth: 760 }}>Hash-checked. Tag-first. Ready for Craig&apos;s chaos.</div>
+                      <p style={{ marginTop: 14, maxWidth: 640, color: "#cbd5e1", fontSize: 16, lineHeight: 1.7 }}>Gallery Inbox, manual uploads, Hub transfers, and job media all land in one place without duplicate clutter.</p>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
                       {[
                         { label: "Library", value: String(items.length), note: "tracked items" },
                         { label: "Photos", value: String(items.filter((item) => item.type === "photo").length), note: "real images" },
                         { label: "Video", value: String(items.filter((item) => item.type === "video").length), note: "playable clips" },
-                        { label: "Audio", value: String(items.filter((item) => item.type === "music").length), note: "inline playback" },
+                        { label: "Inbox", value: String(items.filter((item) => item.source === "gallery-inbox").length), note: "drop-folder items" },
                       ].map((stat) => (
                         <div key={stat.label} style={{ borderRadius: 18, padding: 16, background: "rgba(15,23,42,0.74)", border: "1px solid rgba(148,163,184,0.14)", backdropFilter: "blur(8px)" }}>
                           <div style={{ fontSize: 11, color: "#7dd3fc", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em" }}>{stat.label}</div>
@@ -245,13 +304,13 @@ export default function Page() {
 
                 <div style={{ display: "grid", gap: 18 }}>
                   <div style={{ borderRadius: 24, border: "1px solid rgba(148,163,184,0.14)", background: "linear-gradient(180deg, rgba(15,23,42,0.78) 0%, rgba(2,6,23,0.82) 100%)", padding: 22 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#7dd3fc", textTransform: "uppercase", letterSpacing: "0.12em" }}>Now Playing</div>
-                    <div style={{ fontSize: 28, fontWeight: 900, marginTop: 10 }}>Live folders, not fake seed data.</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#7dd3fc", textTransform: "uppercase", letterSpacing: "0.12em" }}>Now Live</div>
+                    <div style={{ fontSize: 28, fontWeight: 900, marginTop: 10 }}>Actual intake lanes that behave.</div>
                     <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
                       {[
-                        `${items.filter((item) => item.source === "job-media").length} job media items bridged in from mission-control`,
-                        `${lightroomReady} Lightroom exports ready from the watch folder`,
-                        `${items.filter((item) => item.source === "uploads").length} local uploads saved inside the app`,
+                        `${items.filter((item) => item.source === "job-media").length} job media items bridged in`,
+                        `${items.filter((item) => item.source === "gallery-inbox").length} files waiting in Gallery Inbox`,
+                        `${items.filter((item) => item.source === "hub-imports").length} Hub transfers ready to use`,
                       ].map((item, index) => (
                         <div key={item} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: 14, borderRadius: 16, background: index === 0 ? "rgba(14,165,233,0.12)" : "rgba(15,23,42,0.58)", border: "1px solid rgba(148,163,184,0.12)" }}>
                           <div style={{ width: 28, height: 28, borderRadius: 999, background: index === 0 ? "#0ea5e9" : "rgba(148,163,184,0.22)", color: "#fff", display: "grid", placeItems: "center", fontWeight: 800, flexShrink: 0 }}>{index + 1}</div>
@@ -262,9 +321,9 @@ export default function Page() {
                   </div>
 
                   <div style={{ borderRadius: 24, border: "1px solid rgba(148,163,184,0.14)", background: "linear-gradient(135deg, rgba(91,33,182,0.18), rgba(15,23,42,0.78))", padding: 22 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#c4b5fd", textTransform: "uppercase", letterSpacing: "0.12em" }}>Current Taste Level</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, marginTop: 10 }}>Still the pretty shell. Now with teeth.</div>
-                    <p style={{ color: "#cbd5e1", marginTop: 10, lineHeight: 1.6 }}>Inspector edits persist to JSON, smart views are real, and media opens into actual video/audio/photo playback.</p>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#c4b5fd", textTransform: "uppercase", letterSpacing: "0.12em" }}>No More Apple Photos Drama</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, marginTop: 10 }}>Inbox over chaos.</div>
+                    <p style={{ color: "#cbd5e1", marginTop: 10, lineHeight: 1.6 }}>The Gallery now leans on the dedicated inbox folder instead of poking at Apple Photos libraries like a menace.</p>
                   </div>
                 </div>
               </div>
@@ -328,7 +387,7 @@ export default function Page() {
                   </select>
                   <label style={{ display: "grid", placeItems: "center", padding: "14px 16px", borderRadius: 14, border: "1px dashed rgba(125,211,252,0.35)", background: "rgba(14,165,233,0.08)", color: "#e0f2fe", fontWeight: 700, cursor: "pointer" }}>
                     {uploading ? "Uploading…" : "Upload Files"}
-                    <input type="file" multiple style={{ display: "none" }} onChange={(e) => uploadFiles(e.target.files)} />
+                    <input type="file" multiple style={{ display: "none" }} onChange={(e) => queueFiles(e.target.files)} />
                   </label>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
@@ -363,7 +422,7 @@ export default function Page() {
 
                 <section style={{ padding: 20, background: "rgba(3,7,18,0.58)" }}>
                   {loading ? (
-                    <div style={{ borderRadius: 22, border: "1px dashed rgba(148,163,184,0.18)", background: "rgba(15,23,42,0.65)", padding: 36, textAlign: "center", color: "#94a3b8" }}>Loading the library…</div>
+                    <div style={{ borderRadius: 22, border: "1px dashed rgba(148,163,184,0.18)", background: "rgba(15,23,42,0.65)", padding: 36, textAlign: "center", color: "#94a3b8" }}>Loading the gallery…</div>
                   ) : filtered.length === 0 ? (
                     <div style={{ borderRadius: 22, border: "1px dashed rgba(148,163,184,0.18)", background: "rgba(15,23,42,0.65)", padding: 36, textAlign: "center", color: "#94a3b8" }}>No media matches that filter yet.</div>
                   ) : (
@@ -376,6 +435,7 @@ export default function Page() {
                             <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
                               <span style={{ ...statusStyle(item.status), fontSize: 12, padding: "6px 10px", borderRadius: 999, fontWeight: 700 }}>{item.status}</span>
                               <span style={{ background: "rgba(15,23,42,0.72)", color: "#f8fafc", fontSize: 12, padding: "6px 10px", borderRadius: 999, fontWeight: 700, border: "1px solid rgba(148,163,184,0.16)" }}>{typeIcon(item.type)} {item.type}</span>
+                              {item.needsTagging ? <span style={{ background: "rgba(234,179,8,0.18)", color: "#fde68a", fontSize: 12, padding: "6px 10px", borderRadius: 999, fontWeight: 700, border: "1px solid rgba(234,179,8,0.32)" }}>Needs Tag</span> : null}
                             </div>
                             {item.type === "video" ? <span style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: 46 }}>▶️</span> : null}
                             {item.duration ? <span style={{ position: "absolute", right: 12, bottom: 12, background: "rgba(2,6,23,0.82)", color: "#fff", fontSize: 12, padding: "6px 10px", borderRadius: 10, fontWeight: 700 }}>{item.duration}</span> : null}
@@ -417,7 +477,7 @@ export default function Page() {
                         </div>
                       </div>
                       <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-                        {[ ["Date", new Date(selected.date).toLocaleString()], ["Size", selected.size], ["Duration", selected.duration || "-"], ["Source", selected.sourceLabel] ].map(([label, value]) => (
+                        {[["Date", new Date(selected.date).toLocaleString()], ["Size", selected.size], ["Duration", selected.duration || "-"], ["Source", selected.sourceLabel]].map(([label, value]) => (
                           <div key={label} style={{ borderRadius: 14, border: "1px solid rgba(148,163,184,0.14)", background: "rgba(15,23,42,0.78)", padding: 14 }}>
                             <div style={{ fontSize: 11, fontWeight: 800, color: "#7dd3fc", textTransform: "uppercase", letterSpacing: "0.12em" }}>{label}</div>
                             <div style={{ marginTop: 6, fontWeight: 700 }}>{value}</div>
@@ -441,9 +501,35 @@ export default function Page() {
           )}
         </div>
       </div>
+
       {lightboxOpen && selected ? (
         <div onClick={() => setLightboxOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(2,6,23,0.92)", display: "grid", placeItems: "center", padding: 32, zIndex: 20 }}>
           {selected.type === "photo" ? <img src={selected.fileUrl} alt={selected.title} style={{ maxWidth: "92vw", maxHeight: "88vh", objectFit: "contain" }} /> : selected.type === "video" ? <video controls autoPlay src={selected.fileUrl} style={{ maxWidth: "92vw", maxHeight: "88vh" }} /> : <audio controls autoPlay src={selected.fileUrl} style={{ width: "min(700px, 92vw)" }} />}
+        </div>
+      ) : null}
+
+      {tagModalOpen ? (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(2,6,23,0.88)", display: "grid", placeItems: "center", padding: 24, zIndex: 30 }}>
+          <div style={{ width: "min(520px, 100%)", borderRadius: 24, border: "1px solid rgba(148,163,184,0.18)", background: "#0f172a", padding: 24, boxShadow: "0 30px 80px rgba(2,6,23,0.55)" }}>
+            <div style={{ fontSize: 12, color: "#7dd3fc", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em" }}>Quick Tag</div>
+            <div style={{ fontSize: 28, fontWeight: 900, marginTop: 8 }}>What is this?</div>
+            <div style={{ color: "#94a3b8", marginTop: 10 }}>{promptItem ? `Tag ${promptItem.title} from ${promptItem.sourceLabel}.` : pendingUploads.length ? `Tag ${pendingUploads.length} selected file${pendingUploads.length === 1 ? "" : "s"} before import.` : "Choose a tag before saving."}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 10, marginTop: 18 }}>
+              {quickTags.map((tag) => (
+                <button key={tag.key} onClick={() => setPromptTag(tag.key)} style={{ padding: "12px 10px", borderRadius: 14, border: promptTag === tag.key ? "1px solid rgba(125,211,252,0.45)" : "1px solid rgba(148,163,184,0.18)", background: promptTag === tag.key ? "rgba(14,165,233,0.18)" : "rgba(15,23,42,0.85)", color: "#f8fafc", fontWeight: 700 }}>{tag.label}</button>
+              ))}
+            </div>
+            {promptTag === "work" ? (
+              <select value={promptJob} onChange={(e) => setPromptJob(e.target.value)} style={{ width: "100%", padding: "12px 14px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.18)", background: "rgba(15,23,42,0.82)", color: "#f8fafc", marginTop: 16 }}>
+                <option value="">Which job?</option>
+                {jobOptions.map((job) => <option key={job} value={job}>{job}</option>)}
+              </select>
+            ) : null}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 }}>
+              <button onClick={() => { setTagModalOpen(false); setPendingUploads([]); setPromptItem(null); setPromptTag(""); setPromptJob(""); }} style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.18)", background: "rgba(15,23,42,0.82)", color: "#cbd5e1", fontWeight: 700 }}>Cancel</button>
+              <button onClick={() => promptItem ? applyPromptTag() : commitUploadQueue(promptTag || "skip", promptJob)} disabled={!promptTag || (promptTag === "work" && !promptJob)} style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid rgba(74,222,128,0.24)", background: "rgba(34,197,94,0.16)", color: "#bbf7d0", fontWeight: 700, opacity: !promptTag || (promptTag === "work" && !promptJob) ? 0.5 : 1 }}>Save Tag</button>
+            </div>
+          </div>
         </div>
       ) : null}
     </main>

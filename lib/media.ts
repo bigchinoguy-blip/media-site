@@ -8,6 +8,7 @@ const execFileAsync = promisify(execFile);
 
 export type MediaType = "photo" | "video" | "music";
 export type MediaStatus = "RAW" | "LR" | "READY" | "USED";
+export type MediaTag = "work" | "personal" | "travel" | "social";
 
 export type MediaRecord = {
   id: string;
@@ -28,16 +29,25 @@ export type MediaRecord = {
   absolutePath: string;
   extension: string;
   importedFromLightroom?: boolean;
+  hash?: string;
+  needsTagging?: boolean;
 };
 
-type StoredMetadata = Record<string, Partial<MediaRecord> & { id?: string }>;
+type StoredMetadata = Record<string, Partial<MediaRecord> & { id?: string; hash?: string; needsTagging?: boolean }>;
 
 type ScanSource = {
   id: string;
   label: string;
   root: string;
-  type: "job" | "staging" | "lightroom" | "upload" | "audio";
+  type: "job" | "staging" | "lightroom" | "inbox" | "upload" | "audio" | "hub";
   readOnly?: boolean;
+  priority: number;
+};
+
+type UploadTagInput = {
+  tag?: MediaTag | "skip";
+  job?: string;
+  label?: string;
 };
 
 const WORKSPACE = "/Users/veronicaoneill/.openclaw/workspace";
@@ -45,9 +55,12 @@ const APP_ROOT = path.join(WORKSPACE, "2.0");
 const DATA_DIR = path.join(APP_ROOT, "data");
 const PUBLIC_DIR = path.join(APP_ROOT, "public");
 const UPLOADS_DIR = path.join(PUBLIC_DIR, "uploads");
+const HUB_UPLOADS_DIR = path.join(UPLOADS_DIR, "from-hub");
 const THUMBS_DIR = path.join(PUBLIC_DIR, "generated-thumbs");
 const LIBRARY_FILE = path.join(DATA_DIR, "media-library.json");
+const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
 const LIGHTROOM_DIR = path.join(process.env.HOME || "", "Desktop", "Lightroom-Exports");
+const GALLERY_INBOX_DIR = path.join(process.env.HOME || "", "Gallery-Inbox");
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".m4v"]);
@@ -55,19 +68,28 @@ const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".m4a", ".aac"]);
 
 const SCAN_SOURCES: ScanSource[] = [
   {
+    id: "gallery-inbox",
+    label: "Gallery Inbox",
+    root: GALLERY_INBOX_DIR,
+    type: "inbox",
+    priority: 0,
+  },
+  {
     id: "job-media",
     label: "Job Media",
     root: path.join(WORKSPACE, "mission-control", "public", "job-photos"),
     type: "job",
     readOnly: true,
+    priority: 1,
   },
-  { id: "staging-1", label: "Photo Staging", root: path.join(process.env.HOME || "", "photo_staging_3"), type: "staging" },
-  { id: "staging-2", label: "Review 20", root: path.join(process.env.HOME || "", "review20"), type: "staging" },
-  { id: "staging-3", label: "Recent Review", root: path.join(process.env.HOME || "", "photos_review_recent"), type: "staging" },
-  { id: "lightroom", label: "Lightroom", root: LIGHTROOM_DIR, type: "lightroom" },
-  { id: "uploads", label: "Uploads", root: UPLOADS_DIR, type: "upload" },
-  { id: "garageband", label: "GarageBand", root: path.join(process.env.HOME || "", "Music", "GarageBand"), type: "audio" },
-  { id: "logic", label: "Logic", root: path.join(process.env.HOME || "", "Music", "Logic"), type: "audio" },
+  { id: "staging-1", label: "Photo Staging", root: path.join(process.env.HOME || "", "photo_staging_3"), type: "staging", priority: 3 },
+  { id: "staging-2", label: "Review 20", root: path.join(process.env.HOME || "", "review20"), type: "staging", priority: 4 },
+  { id: "staging-3", label: "Recent Review", root: path.join(process.env.HOME || "", "photos_review_recent"), type: "staging", priority: 5 },
+  { id: "lightroom", label: "Lightroom", root: LIGHTROOM_DIR, type: "lightroom", priority: 2 },
+  { id: "uploads", label: "Uploads", root: UPLOADS_DIR, type: "upload", priority: 2 },
+  { id: "hub-imports", label: "Hub Transfers", root: HUB_UPLOADS_DIR, type: "hub", priority: 2 },
+  { id: "garageband", label: "GarageBand", root: path.join(process.env.HOME || "", "Music", "GarageBand"), type: "audio", priority: 6 },
+  { id: "logic", label: "Logic", root: path.join(process.env.HOME || "", "Music", "Logic"), type: "audio", priority: 7 },
 ];
 
 async function exists(target: string) {
@@ -83,10 +105,15 @@ async function ensureDirs() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  await fs.mkdir(HUB_UPLOADS_DIR, { recursive: true });
   await fs.mkdir(THUMBS_DIR, { recursive: true });
   await fs.mkdir(LIGHTROOM_DIR, { recursive: true });
+  await fs.mkdir(GALLERY_INBOX_DIR, { recursive: true });
   if (!(await exists(LIBRARY_FILE))) {
     await fs.writeFile(LIBRARY_FILE, JSON.stringify({}, null, 2));
+  }
+  if (!(await exists(JOBS_FILE))) {
+    await fs.writeFile(JOBS_FILE, JSON.stringify([], null, 2));
   }
 }
 
@@ -107,10 +134,7 @@ async function saveStoredMetadata(data: StoredMetadata) {
 }
 
 function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "untitled";
+  return input.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
 }
 
 function titleize(input: string) {
@@ -183,40 +207,63 @@ async function ensureVideoThumb(id: string, filePath: string) {
   }
 }
 
-function buildId(sourceId: string, relativePath: string) {
-  return crypto.createHash("md5").update(`${sourceId}:${relativePath}`).digest("hex").slice(0, 12);
+async function hashFileHead(filePath: string) {
+  const handle = await fs.open(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(64 * 1024);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    return crypto.createHash("sha256").update(buffer.subarray(0, bytesRead)).digest("hex");
+  } finally {
+    await handle.close();
+  }
+}
+
+function buildId(seed: string) {
+  return crypto.createHash("md5").update(seed).digest("hex").slice(0, 12);
 }
 
 function fileUrlForId(id: string, kind: "file" | "thumb" = "file") {
   return `/api/media/${id}/${kind}`;
 }
 
-function inferJob(source: ScanSource, relativePath: string, title: string, tags: string[]) {
+function sanitizeTag(tag?: string) {
+  return tag?.trim().toLowerCase() || "";
+}
+
+function applyTagSelection(source: ScanSource, existing: string[], input?: UploadTagInput, sourceLabel?: string) {
+  const tags = new Set(existing.map(sanitizeTag).filter(Boolean));
+  const chosen = sanitizeTag(input?.tag);
+  const job = input?.job?.trim() || "";
+  const label = input?.label?.trim() || "";
+
+  if (source.type === "job" || chosen === "work" || source.type === "hub") tags.add("work");
+  if (source.type === "lightroom") tags.add("edited");
+  if (source.type === "staging") tags.add("personal");
+  if (source.type === "audio") tags.add("audio");
+  if (source.type === "upload") tags.add("upload");
+  if (source.type === "inbox") tags.add("inbox");
+  if (source.type === "hub") tags.add("hub");
+  if (sourceLabel) tags.add(sourceLabel.toLowerCase().replace(/\s+/g, "-"));
+  if (["work", "personal", "travel", "social"].includes(chosen)) tags.add(chosen);
+  if (chosen === "social") tags.add("social");
+  if (job) tags.add(job.toLowerCase());
+  if (label) tags.add(label.toLowerCase());
+  return Array.from(tags);
+}
+
+function inferJob(source: ScanSource, relativePath: string, title: string, tags: string[], input?: UploadTagInput) {
+  if (input?.job?.trim()) return input.job.trim();
   if (source.type === "job") {
     const topLevel = relativePath.split(path.sep)[0] || "";
     const cleaned = topLevel.replace(/^job-/, "");
     return titleize(cleaned || title);
   }
+  if (tags.includes("work")) return "Work Media";
   if (tags.includes("personal")) return "Personal Media";
   return source.type === "audio" ? source.label : "Personal Media";
 }
 
-function inferTags(source: ScanSource, relativePath: string) {
-  const lower = relativePath.toLowerCase();
-  const tags = new Set<string>();
-  if (source.type === "job") tags.add("work");
-  if (source.type === "lightroom") tags.add("edited");
-  if (source.type === "audio") tags.add("audio");
-  if (source.type === "upload") tags.add("upload");
-  if (source.type === "staging") tags.add("personal");
-  if (lower.includes("travel")) tags.add("travel");
-  if (lower.includes("instagram") || lower.includes("facebook") || lower.includes("social")) tags.add("social");
-  if (lower.includes("instagram")) tags.add("instagram");
-  if (lower.includes("facebook")) tags.add("facebook");
-  return [...tags];
-}
-
-async function buildRecord(source: ScanSource, absolutePath: string, stored: StoredMetadata): Promise<MediaRecord | null> {
+async function buildRecord(source: ScanSource, absolutePath: string, stored: StoredMetadata, hashIndex: Map<string, string>, options?: { tagInput?: UploadTagInput; sourceLabel?: string }) {
   const stat = await fs.stat(absolutePath);
   const ext = path.extname(absolutePath).toLowerCase();
   const type = deriveType(ext);
@@ -224,17 +271,34 @@ async function buildRecord(source: ScanSource, absolutePath: string, stored: Sto
 
   const relativePath = path.relative(source.root, absolutePath);
   if (!relativePath || relativePath.startsWith("..")) return null;
-  const id = buildId(source.id, relativePath);
-  const saved = stored[id] || {};
+
+  const hash = await hashFileHead(absolutePath);
+  const existingIdForHash = hashIndex.get(hash);
+  const legacyId = buildId(`${source.id}:${relativePath}`);
+  const savedForLegacy = stored[legacyId] || {};
+  const savedForHash = existingIdForHash ? stored[existingIdForHash] || {} : {};
+  const id = existingIdForHash || (savedForHash.id as string) || (savedForLegacy.id as string) || buildId(hash);
+  const saved = { ...savedForLegacy, ...savedForHash };
+
+  if (existingIdForHash && saved.absolutePath && saved.absolutePath !== absolutePath) {
+    return null;
+  }
+
   const filename = path.basename(absolutePath);
   const title = (saved.title as string) || titleize(filename);
-  const autoTags = inferTags(source, relativePath);
-  const tags = Array.from(new Set([...(saved.tags || []), ...autoTags].filter(Boolean))) as string[];
-  const job = (saved.job as string) || inferJob(source, relativePath, title, tags);
-  const status = (saved.status as MediaStatus) || (source.type === "lightroom" ? "LR" : source.type === "job" ? "READY" : "RAW");
+  const tags = applyTagSelection(source, (saved.tags as string[]) || [], options?.tagInput, options?.sourceLabel);
+  const lowerPath = relativePath.toLowerCase();
+  if (lowerPath.includes("travel")) tags.push("travel");
+  if (lowerPath.includes("instagram") || lowerPath.includes("facebook") || lowerPath.includes("social")) tags.push("social");
+  const finalTags = Array.from(new Set(tags.filter(Boolean)));
+  const job = (saved.job as string) || inferJob(source, relativePath, title, finalTags, options?.tagInput);
+  const status = (saved.status as MediaStatus) || (source.type === "job" || source.type === "hub" ? "READY" : source.type === "lightroom" ? "LR" : "RAW");
   const durationSeconds = type === "video" || type === "music" ? await getVideoDuration(absolutePath) : null;
   const fileUrl = fileUrlForId(id, "file");
   const thumb = type === "photo" ? fileUrlForId(id, "thumb") : type === "video" ? (await ensureVideoThumb(id, absolutePath)) || fileUrlForId(id, "thumb") : fileUrlForId(id, "thumb");
+  const needsTagging = Boolean(saved.needsTagging) || (source.type === "inbox" && finalTags.filter((tag) => ["work", "personal", "travel", "social"].includes(tag)).length === 0);
+
+  hashIndex.set(hash, id);
 
   return {
     id,
@@ -243,42 +307,28 @@ async function buildRecord(source: ScanSource, absolutePath: string, stored: Sto
     status,
     job,
     date: (saved.date as string) || stat.mtime.toISOString(),
-    tags,
+    tags: finalTags,
     size: formatBytes(stat.size),
     duration: (saved.duration as string) || formatSeconds(durationSeconds),
     thumb,
     fileUrl,
     notes: (saved.notes as string) || "",
     source: source.id,
-    sourceLabel: source.label,
+    sourceLabel: options?.sourceLabel || source.label,
     relativePath,
     absolutePath,
     extension: ext,
-    importedFromLightroom: source.type === "lightroom",
-  };
+    importedFromLightroom: false,
+    hash,
+    needsTagging,
+  } satisfies MediaRecord;
 }
 
-export async function getLibrary() {
-  await ensureDirs();
-  const stored = await loadStoredMetadata();
-  const items: MediaRecord[] = [];
-
-  for (const source of SCAN_SOURCES) {
-    if (!(await exists(source.root))) continue;
-    const files = await walk(source.root);
-    for (const file of files) {
-      if (path.basename(file).toLowerCase() === "meta.json") continue;
-      const record = await buildRecord(source, file, stored);
-      if (record) items.push(record);
-    }
-  }
-
-  items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const nextStored: StoredMetadata = { ...stored };
+async function persistLibraryItems(items: MediaRecord[], stored: StoredMetadata) {
+  const nextStored: StoredMetadata = {};
   for (const item of items) {
     nextStored[item.id] = {
-      ...(nextStored[item.id] || {}),
+      ...(stored[item.id] || {}),
       id: item.id,
       title: item.title,
       status: item.status,
@@ -296,9 +346,55 @@ export async function getLibrary() {
       type: item.type,
       size: item.size,
       importedFromLightroom: item.importedFromLightroom,
+      hash: item.hash,
+      needsTagging: item.needsTagging,
     };
   }
   await saveStoredMetadata(nextStored);
+  return nextStored;
+}
+
+export async function getJobOptions() {
+  await ensureDirs();
+  let localJobs: string[] = [];
+  try {
+    const raw = await fs.readFile(JOBS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      localJobs = parsed.map((item) => (typeof item === "string" ? item : item?.name)).filter(Boolean);
+    }
+  } catch {}
+  const stored = await loadStoredMetadata();
+  const storedJobs = Object.values(stored).map((item) => item.job).filter((job): job is string => Boolean(job));
+  return Array.from(new Set([...localJobs, ...storedJobs].filter(Boolean))).sort((a, b) => a.localeCompare(b));
+}
+
+export async function getLibrary() {
+  await ensureDirs();
+  const stored = await loadStoredMetadata();
+  const items: MediaRecord[] = [];
+  const hashIndex = new Map<string, string>();
+  const sources = [...SCAN_SOURCES].sort((a, b) => a.priority - b.priority);
+
+  const savedWithHashes = Object.values(stored)
+    .filter((item): item is Partial<MediaRecord> & { id: string; hash: string } => Boolean(item.id && item.hash))
+    .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+  for (const item of savedWithHashes) {
+    hashIndex.set(item.hash, item.id);
+  }
+
+  for (const source of sources) {
+    if (!(await exists(source.root))) continue;
+    const files = await walk(source.root);
+    for (const file of files) {
+      if (path.basename(file).toLowerCase() === "meta.json") continue;
+      const record = await buildRecord(source, file, stored, hashIndex);
+      if (record) items.push(record);
+    }
+  }
+
+  items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  await persistLibraryItems(items, stored);
   return items;
 }
 
@@ -309,24 +405,43 @@ export async function getLibrarySummary() {
   const videos = items.filter((item) => item.type === "video").length;
   const music = items.filter((item) => item.type === "music").length;
   const lightroomReady = items.filter((item) => item.source === "lightroom").length;
-  return { items, summary: { total, photos, videos, music, lightroomReady } };
+  const inboxCount = items.filter((item) => item.source === "gallery-inbox").length;
+  return { items, summary: { total, photos, videos, music, lightroomReady, inboxCount }, jobs: await getJobOptions(), inboxPath: GALLERY_INBOX_DIR };
 }
 
-export async function updateMediaRecord(id: string, patch: Partial<Pick<MediaRecord, "title" | "status" | "job" | "tags" | "notes" | "date">>) {
+export async function updateMediaRecord(id: string, patch: Partial<Pick<MediaRecord, "title" | "status" | "job" | "tags" | "notes" | "date" | "needsTagging">>) {
   const stored = await loadStoredMetadata();
   stored[id] = {
     ...(stored[id] || {}),
     ...patch,
-    tags: patch.tags ? Array.from(new Set(patch.tags.map((tag) => tag.trim()).filter(Boolean))) : stored[id]?.tags,
+    tags: patch.tags ? Array.from(new Set(patch.tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))) : stored[id]?.tags,
+    needsTagging: patch.needsTagging ?? (stored[id]?.needsTagging as boolean | undefined),
   };
   await saveStoredMetadata(stored);
   const items = await getLibrary();
   return items.find((item) => item.id === id) || null;
 }
 
+export async function applyTagPrompt(id: string, input: UploadTagInput) {
+  const item = await getMediaById(id);
+  if (!item) return null;
+  const tags = applyTagSelection({ id: item.source, label: item.sourceLabel, root: path.dirname(item.absolutePath), type: item.source === "gallery-inbox" ? "inbox" : item.source === "hub-imports" ? "hub" : item.source === "uploads" ? "upload" : "staging", priority: 0 }, item.tags, input);
+  return updateMediaRecord(id, {
+    tags,
+    job: input.job?.trim() || (tags.includes("work") ? item.job === "Personal Media" ? "Work Media" : item.job : item.job),
+    needsTagging: false,
+  });
+}
+
 export async function getMediaById(id: string) {
   const items = await getLibrary();
   return items.find((item) => item.id === id) || null;
+}
+
+export async function importGalleryInbox() {
+  const items = await getLibrary();
+  const count = items.filter((item) => item.source === "gallery-inbox").length;
+  return { imported: count, inboxDir: GALLERY_INBOX_DIR };
 }
 
 export async function importLightroomExports() {
@@ -336,13 +451,44 @@ export async function importLightroomExports() {
   return { imported: count, lightroomDir: LIGHTROOM_DIR };
 }
 
-export async function saveUpload(fileName: string, bytes: ArrayBuffer) {
+export async function saveUpload(fileName: string, bytes: ArrayBuffer, input?: UploadTagInput) {
   await ensureDirs();
   const safeName = `${Date.now()}-${slugify(path.basename(fileName, path.extname(fileName)))}${path.extname(fileName).toLowerCase() || ".bin"}`;
   const target = path.join(UPLOADS_DIR, safeName);
   await fs.writeFile(target, Buffer.from(bytes));
-  const items = await getLibrary();
-  return items.find((item) => item.absolutePath === target) || null;
+
+  const stored = await loadStoredMetadata();
+  const hashIndex = new Map<string, string>(Object.values(stored).flatMap((item) => item.hash && item.id ? [[item.hash, item.id]] : []));
+  const source = SCAN_SOURCES.find((item) => item.id === "uploads")!;
+  const record = await buildRecord(source, target, stored, hashIndex, { tagInput: input, sourceLabel: source.label });
+  if (!record) return null;
+  record.needsTagging = false;
+  await persistLibraryItems([...(await getLibrary()).filter((item) => item.id !== record.id), record].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), stored);
+  return await getMediaById(record.id);
+}
+
+export async function receiveFromHub(input: { sourcePath: string; jobName?: string; jobId?: string; label?: string }) {
+  await ensureDirs();
+  const ext = path.extname(input.sourcePath).toLowerCase() || ".bin";
+  const base = path.basename(input.sourcePath, ext);
+  const safeName = `${Date.now()}-${slugify(base)}${ext}`;
+  const target = path.join(HUB_UPLOADS_DIR, safeName);
+  await fs.copyFile(input.sourcePath, target);
+
+  const stored = await loadStoredMetadata();
+  const hashIndex = new Map<string, string>(Object.values(stored).flatMap((item) => item.hash && item.id ? [[item.hash, item.id]] : []));
+  const source = SCAN_SOURCES.find((item) => item.id === "hub-imports")!;
+  const record = await buildRecord(source, target, stored, hashIndex, {
+    tagInput: { tag: "work", job: input.jobName, label: input.label || input.jobId },
+    sourceLabel: source.label,
+  });
+  if (!record) return null;
+  record.status = "READY";
+  record.job = input.jobName?.trim() || input.jobId?.trim() || record.job;
+  record.tags = Array.from(new Set(["work", input.jobName?.trim(), input.label?.trim()].filter(Boolean).map((tag) => String(tag).toLowerCase())));
+  record.needsTagging = false;
+  await persistLibraryItems([...(await getLibrary()).filter((item) => item.id !== record.id), record].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), stored);
+  return await getMediaById(record.id);
 }
 
 export function getContentType(ext: string) {
@@ -352,4 +498,4 @@ export function getContentType(ext: string) {
   return "application/octet-stream";
 }
 
-export { LIBRARY_FILE, LIGHTROOM_DIR, SCAN_SOURCES };
+export { GALLERY_INBOX_DIR, HUB_UPLOADS_DIR, JOBS_FILE, LIBRARY_FILE, LIGHTROOM_DIR, SCAN_SOURCES };

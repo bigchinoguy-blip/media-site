@@ -10,6 +10,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing file" }, { status: 400 });
   }
 
-  const item = await saveUpload(file.name, await file.arrayBuffer());
+  const tagValue = form.get("tag");
+  const jobValue = form.get("job");
+  const item = await saveUpload(file.name, await file.arrayBuffer(), {
+    tag: typeof tagValue === "string" ? (tagValue as "work" | "personal" | "travel" | "social" | "skip") : undefined,
+    job: typeof jobValue === "string" ? jobValue : undefined,
+  });
+
   return NextResponse.json({ item });
 }
